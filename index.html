@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário de Estudos 2026</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .month-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .day-header {
+            background: #e2e8f0;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        .day {
+            background: #f7fafc;
+            padding: 10px;
+            min-height: 80px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .day:hover {
+            background: #edf2f7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .day.today {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+        }
+        .day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .subject {
+            background: rgba(102, 126, 234, 0.8);
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-top: 2px;
+            display: block;
+        }
+        .subject-macroeconomia { background: rgba(255, 0, 0, 0.8); }
+        .subject-microeconomia { background: rgba(255, 255, 0, 0.8); color: black; }
+        .subject-estatística { background: rgba(144, 238, 144, 0.8); }
+        .subject-matemática { background: rgba(0, 0, 255, 0.8); }
+        .subject.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .subject.overdue {
+            background: #ccc !important;
+            color: #666 !important;
+        }
+        .day-tasks {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 80%;
+            max-width: 500px;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .task-name.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .task-category {
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
+        }
+        .task-item button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .add-subject {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+        }
+        .add-subject input, .add-subject textarea, .add-subject select {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .add-subject input[type="checkbox"] {
+            width: auto;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 999;
+        }
+        .month-name {
+            text-align: center;
+            font-size: 2em;
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calendário de Estudos 2026</h1>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <label><input type="checkbox" id="testMode"> Modo Teste</label>
+            <button id="reportBtn" style="margin-left: 20px;">Relatório</button>
+            <button id="globalNoteBtn" style="margin-left: 20px;">Anotações Globais</button>
+        </div>
+        <div class="month-selector">
+            <button id="prevMonth">Mês Anterior</button>
+            <div class="month-name" id="monthName">Janeiro 2026</div>
+            <button id="nextMonth">Próximo Mês</button>
+        </div>
+        <div class="calendar" id="calendar"></div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <div class="add-subject" id="addSubject">
+        <h3>Adicionar Matéria para Estudar</h3>
+        <input type="text" id="subjectInput" placeholder="Nome da matéria">
+        <select id="categoryInput">
+            <option value="">Selecione uma categoria</option>
+            <option value="macroeconomia">Macroeconomia</option>
+            <option value="microeconomia">Microeconomia</option>
+            <option value="estatística">Estatística</option>
+            <option value="matemática">Matemática</option>
+        </select>
+        <textarea id="notesInput" placeholder="Notas adicionais (opcional)"></textarea>
+        <input type="checkbox" id="completedInput">
+        <button id="saveSubject">Salvar</button>
+        <button id="cancelSubject">Cancelar</button>
+    </div>
+    <div class="day-tasks" id="dayTasks">
+        <h3>Tarefas de <span id="taskDate"></span></h3>
+        <div id="taskList"></div>
+        <button id="addNewTask">Adicionar nova tarefa</button>
+        <button id="closeDayTasks">Fechar</button>
+    </div>
+    <div class="day-tasks" id="reportModal" style="max-width: 600px;">
+        <h3>Relatório de Tarefas</h3>
+        <div id="reportContent"></div>
+        <button id="closeReport">Fechar</button>
+    </div>
+    <div class="day-tasks" id="globalNoteModal" style="max-width: 600px;">
+        <h3>Anotações Globais</h3>
+        <textarea id="globalNote" placeholder="Digite suas anotações globais aqui..." style="width: 100%; height: 200px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+        <button id="closeGlobalNote" style="margin-top: 10px;">Fechar</button>
+    </div>
+
+    <script>
+        const months = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+        const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+        let currentMonth = 0; // Janeiro
+        let currentYear = 2026;
+
+        const calendar = document.getElementById('calendar');
+        const monthName = document.getElementById('monthName');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const addSubjectDiv = document.getElementById('addSubject');
+        const overlay = document.getElementById('overlay');
+        const dayTasksDiv = document.getElementById('dayTasks');
+        const taskDate = document.getElementById('taskDate');
+        const taskList = document.getElementById('taskList');
+        const addNewTaskBtn = document.getElementById('addNewTask');
+        const closeDayTasksBtn = document.getElementById('closeDayTasks');
+        const reportBtn = document.getElementById('reportBtn');
+        const reportModal = document.getElementById('reportModal');
+        const reportContent = document.getElementById('reportContent');
+        const closeReportBtn = document.getElementById('closeReport');
+        const globalNoteBtn = document.getElementById('globalNoteBtn');
+        const globalNoteModal = document.getElementById('globalNoteModal');
+        const globalNote = document.getElementById('globalNote');
+        const closeGlobalNote = document.getElementById('closeGlobalNote');
+        const testMode = document.getElementById('testMode');
+        const subjectInput = document.getElementById('subjectInput');
+        const notesInput = document.getElementById('notesInput');
+        const categoryInput = document.getElementById('categoryInput');
+        const completedInput = document.getElementById('completedInput');
+        const saveSubjectBtn = document.getElementById('saveSubject');
+        const cancelSubjectBtn = document.getElementById('cancelSubject');
+
+        let selectedDate = null;
+        let editingSubject = null;
+        let cameFromDayTasks = false;
+
+        function renderCalendar() {
+            calendar.innerHTML = '';
+            monthName.textContent = `${months[currentMonth]} ${currentYear}`;
+
+            const storage = testMode.checked ? sessionStorage : localStorage;
+
+            // Headers
+            daysOfWeek.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.textContent = day;
+                calendar.appendChild(dayHeader);
+            });
+
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth;
+
+            for (let i = 0; i < 42; i++) {
+                const day = document.createElement('div');
+                day.className = 'day';
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = date.getDate();
+
+                if (date.getMonth() !== currentMonth) {
+                    day.style.opacity = '0.5';
+                }
+
+                if (isCurrentMonth && date.getDate() === today.getDate() && date.getMonth() === today.getMonth()) {
+                    day.classList.add('today');
+                }
+
+                day.appendChild(dayNumber);
+
+                // Load subjects from storage
+                const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                let subjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                subjects = subjects.map(subject => {
+                    if (!subject.id) {
+                        subject.id = Date.now() + Math.random();
+                    }
+                    return subject;
+                });
+                storage.setItem(dateKey, JSON.stringify(subjects)); // update with ids
+                subjects.forEach(subject => {
+                    const subjectDiv = document.createElement('div');
+                    subjectDiv.className = 'subject';
+                    if (subject.category) {
+                        subjectDiv.classList.add(`subject-${subject.category}`);
+                    }
+                    if (subject.completed) {
+                        subjectDiv.classList.add('completed');
+                    } else if (date < today && date.toDateString() !== today.toDateString()) {
+                        subjectDiv.classList.add('overdue');
+                    }
+                    subjectDiv.textContent = subject.name;
+                    subjectDiv.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        selectedDate = date;
+                        editingSubject = subject;
+                        addSubjectDiv.style.display = 'block';
+                        overlay.style.display = 'block';
+                        subjectInput.value = subject.name;
+                        notesInput.value = subject.notes || '';
+                        categoryInput.value = subject.category || '';
+                        completedInput.checked = subject.completed || false;
+                    });
+                    day.appendChild(subjectDiv);
+                });
+
+                day.addEventListener('click', () => {
+                    selectedDate = date;
+                    cameFromDayTasks = false;
+                    // Populate the task list
+                    taskDate.textContent = date.toLocaleDateString('pt-BR');
+                    taskList.innerHTML = '';
+                    const storage = testMode.checked ? sessionStorage : localStorage;
+                    const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    const subjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                    if (subjects.length === 0) {
+                        taskList.innerHTML = '<p>Nenhuma tarefa para este dia.</p>';
+                    } else {
+                        subjects.forEach(subject => {
+                            const taskItem = document.createElement('div');
+                            taskItem.className = 'task-item';
+                            taskItem.innerHTML = `
+                                <div>
+                                    <span class="task-name ${subject.completed ? 'completed' : ''}">${subject.name}</span>
+                                    <span class="task-category">${subject.category || 'Sem categoria'}</span>
+                                </div>
+                                <div>
+                                    <button class="edit-task" data-id="${subject.id}">Editar</button>
+                                    <button class="toggle-complete" data-id="${subject.id}">${subject.completed ? 'Desmarcar' : 'Concluir'}</button>
+                                    <button class="delete-task" data-id="${subject.id}">Excluir</button>
+                                </div>
+                            `;
+                            taskList.appendChild(taskItem);
+                        });
+                    }
+                    dayTasksDiv.style.display = 'block';
+                    overlay.style.display = 'block';
+                });
+
+                calendar.appendChild(day);
+            }
+        }
+
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        });
+
+        saveSubjectBtn.addEventListener('click', () => {
+            if (subjectInput.value.trim()) {
+                const storage = testMode.checked ? sessionStorage : localStorage;
+                const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+                let subjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                if (editingSubject) {
+                    subjects = subjects.filter(s => s.id !== editingSubject.id);
+                }
+                subjects.push({
+                    id: editingSubject ? editingSubject.id : Date.now() + Math.random(),
+                    name: subjectInput.value.trim(),
+                    notes: notesInput.value.trim(),
+                    category: categoryInput.value,
+                    completed: completedInput.checked
+                });
+                storage.setItem(dateKey, JSON.stringify(subjects));
+                addSubjectDiv.style.display = 'none';
+                editingSubject = null;
+                renderCalendar();
+                if (cameFromDayTasks) {
+                    // Repopulate and show dayTasks
+                    taskDate.textContent = selectedDate.toLocaleDateString('pt-BR');
+                    taskList.innerHTML = '';
+                    const updatedSubjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                    if (updatedSubjects.length === 0) {
+                        taskList.innerHTML = '<p>Nenhuma tarefa para este dia.</p>';
+                    } else {
+                        updatedSubjects.forEach(subject => {
+                            const taskItem = document.createElement('div');
+                            taskItem.className = 'task-item';
+                            taskItem.innerHTML = `
+                                <div>
+                                    <span class="task-name ${subject.completed ? 'completed' : ''}">${subject.name}</span>
+                                    <span class="task-category">${subject.category || 'Sem categoria'}</span>
+                                </div>
+                                <div>
+                                    <button class="edit-task" data-id="${subject.id}">Editar</button>
+                                    <button class="toggle-complete" data-id="${subject.id}">${subject.completed ? 'Desmarcar' : 'Concluir'}</button>
+                                    <button class="delete-task" data-id="${subject.id}">Excluir</button>
+                                </div>
+                            `;
+                            taskList.appendChild(taskItem);
+                        });
+                    }
+                    dayTasksDiv.style.display = 'block';
+                    overlay.style.display = 'block';
+                    cameFromDayTasks = false;
+                } else {
+                    overlay.style.display = 'none';
+                }
+            }
+        });
+
+        cancelSubjectBtn.addEventListener('click', () => {
+            addSubjectDiv.style.display = 'none';
+            editingSubject = null;
+            if (cameFromDayTasks) {
+                dayTasksDiv.style.display = 'block';
+                cameFromDayTasks = false;
+            } else {
+                overlay.style.display = 'none';
+            }
+        });
+
+        overlay.addEventListener('click', () => {
+            addSubjectDiv.style.display = 'none';
+            dayTasksDiv.style.display = 'none';
+            reportModal.style.display = 'none';
+            globalNoteModal.style.display = 'none';
+            overlay.style.display = 'none';
+            editingSubject = null;
+        });
+
+        taskList.addEventListener('click', (e) => {
+            const storage = testMode.checked ? sessionStorage : localStorage;
+            if (e.target.classList.contains('edit-task')) {
+                const id = e.target.dataset.id;
+                const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+                const subjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                editingSubject = subjects.find(s => s.id == id);
+                cameFromDayTasks = true;
+                // Open edit modal
+                addSubjectDiv.style.display = 'block';
+                dayTasksDiv.style.display = 'none';
+                subjectInput.value = editingSubject.name;
+                notesInput.value = editingSubject.notes || '';
+                categoryInput.value = editingSubject.category || '';
+                completedInput.checked = editingSubject.completed || false;
+            } else if (e.target.classList.contains('toggle-complete')) {
+                const id = e.target.dataset.id;
+                const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+                let subjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                const subject = subjects.find(s => s.id == id);
+                subject.completed = !subject.completed;
+                storage.setItem(dateKey, JSON.stringify(subjects));
+                renderCalendar();
+                // Update the button and name
+                e.target.textContent = subject.completed ? 'Desmarcar' : 'Concluir';
+                const taskName = e.target.parentElement.previousElementSibling.querySelector('.task-name');
+                taskName.classList.toggle('completed');
+            } else if (e.target.classList.contains('delete-task')) {
+                if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                    const id = e.target.dataset.id;
+                    const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+                    let subjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                    subjects = subjects.filter(s => s.id != id);
+                    storage.setItem(dateKey, JSON.stringify(subjects));
+                    renderCalendar();
+                    // Remove from list
+                    e.target.closest('.task-item').remove();
+                    if (subjects.length === 0) {
+                        taskList.innerHTML = '<p>Nenhuma tarefa para este dia.</p>';
+                    }
+                }
+            }
+        });
+
+        addNewTaskBtn.addEventListener('click', () => {
+            editingSubject = null;
+            cameFromDayTasks = true;
+            addSubjectDiv.style.display = 'block';
+            dayTasksDiv.style.display = 'none';
+            subjectInput.value = '';
+            notesInput.value = '';
+            categoryInput.value = '';
+            completedInput.checked = false;
+        });
+
+        closeDayTasksBtn.addEventListener('click', () => {
+            dayTasksDiv.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        reportBtn.addEventListener('click', () => {
+            const storage = testMode.checked ? sessionStorage : localStorage;
+            const today = new Date();
+            let completed = 0, incomplete = 0, overdue = 0;
+            const overdueList = [], incompleteList = [], completedList = [];
+            for (let year = 2026; year <= 2026; year++) { // assuming only 2026
+                for (let month = 0; month < 12; month++) {
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const dateKey = `${year}-${month + 1}-${day}`;
+                        const subjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                        const date = new Date(year, month, day);
+                        subjects.forEach(subject => {
+                            if (subject.completed) {
+                                completed++;
+                                completedList.push(`${subject.name} (${date.toLocaleDateString('pt-BR')})`);
+                            } else if (date < today) {
+                                overdue++;
+                                overdueList.push(`${subject.name} (${date.toLocaleDateString('pt-BR')})`);
+                            } else {
+                                incomplete++;
+                                incompleteList.push(`${subject.name} (${date.toLocaleDateString('pt-BR')})`);
+                            }
+                        });
+                    }
+                }
+            }
+            reportContent.innerHTML = `
+                <p><strong>Concluídas:</strong> ${completed}</p>
+                <ul>${completedList.map(s => `<li>${s}</li>`).join('')}</ul>
+                <p><strong>Incompletas:</strong> ${incomplete}</p>
+                <ul>${incompleteList.map(s => `<li>${s}</li>`).join('')}</ul>
+                <p><strong>Atrasadas:</strong> ${overdue}</p>
+                <ul>${overdueList.map(s => `<li>${s}</li>`).join('')}</ul>
+            `;
+            reportModal.style.display = 'block';
+            overlay.style.display = 'block';
+        });
+
+        closeReportBtn.addEventListener('click', () => {
+            reportModal.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        globalNoteBtn.addEventListener('click', () => {
+            const storage = testMode.checked ? sessionStorage : localStorage;
+            globalNote.value = storage.getItem('globalNote') || '';
+            globalNoteModal.style.display = 'block';
+            overlay.style.display = 'block';
+        });
+
+        closeGlobalNote.addEventListener('click', () => {
+            globalNoteModal.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        testMode.addEventListener('change', () => {
+            const storage = testMode.checked ? sessionStorage : localStorage;
+            renderCalendar();
+        });
+
+        globalNote.addEventListener('input', () => {
+            const storage = testMode.checked ? sessionStorage : localStorage;
+            storage.setItem('globalNote', globalNote.value);
+        });
+
+        renderCalendar();
+    </script>
+</body>
+</html>
