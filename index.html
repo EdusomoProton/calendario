@@ -372,6 +372,7 @@
                                     <button class="edit-task" data-id="${subject.id}">Editar</button>
                                     <button class="toggle-complete" data-id="${subject.id}">${subject.completed ? 'Desmarcar' : 'Concluir'}</button>
                                     <button class="delete-task" data-id="${subject.id}">Excluir</button>
+                                    ${testMode.checked ? `<button class="export-task" data-id="${subject.id}">Exportar</button>` : ''}
                                 </div>
                             `;
                             taskList.appendChild(taskItem);
@@ -442,6 +443,7 @@
                                     <button class="edit-task" data-id="${subject.id}">Editar</button>
                                     <button class="toggle-complete" data-id="${subject.id}">${subject.completed ? 'Desmarcar' : 'Concluir'}</button>
                                     <button class="delete-task" data-id="${subject.id}">Excluir</button>
+                                    ${testMode.checked ? `<button class="export-task" data-id="${subject.id}">Exportar</button>` : ''}
                                 </div>
                             `;
                             taskList.appendChild(taskItem);
@@ -516,6 +518,19 @@
                     if (subjects.length === 0) {
                         taskList.innerHTML = '<p>Nenhuma tarefa para este dia.</p>';
                     }
+                }
+            } else if (e.target.classList.contains('export-task')) {
+                const id = e.target.dataset.id;
+                const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+                const subjects = JSON.parse(storage.getItem(dateKey) || '[]');
+                const subject = subjects.find(s => s.id == id);
+                const prodSubjects = JSON.parse(localStorage.getItem(dateKey) || '[]');
+                if (!prodSubjects.find(s => s.id === subject.id)) {
+                    prodSubjects.push(subject);
+                    localStorage.setItem(dateKey, JSON.stringify(prodSubjects));
+                    alert('Tarefa exportada para produção!');
+                } else {
+                    alert('Tarefa já existe em produção.');
                 }
             }
         });
