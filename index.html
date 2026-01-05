@@ -179,6 +179,21 @@
             color: #4a5568;
             margin-bottom: 20px;
         }
+        
+        .note-item {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+        .note-item p {
+            margin: 0 0 10px 0;
+            white-space: pre-wrap;
+        }
+        .note-item button {
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -225,7 +240,8 @@
     </div>
     <div class="day-tasks" id="globalNoteModal" style="max-width: 600px;">
         <h3>Anotações Globais</h3>
-        <textarea id="globalNote" placeholder="Digite suas anotações globais aqui..." style="width: 100%; height: 200px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+        <div id="globalNotesList"></div>
+        <button id="addGlobalNote" style="margin-top: 10px;">Adicionar Nova Anotação</button>
         <button id="closeGlobalNote" style="margin-top: 10px;">Fechar</button>
     </div>
 
@@ -256,7 +272,8 @@
         const closeReportBtn = document.getElementById('closeReport');
         const globalNoteBtn = document.getElementById('globalNoteBtn');
         const globalNoteModal = document.getElementById('globalNoteModal');
-        const globalNote = document.getElementById('globalNote');
+        const globalNotesList = document.getElementById('globalNotesList');
+        const addGlobalNoteBtn = document.getElementById('addGlobalNote');
         const closeGlobalNote = document.getElementById('closeGlobalNote');
         const testMode = document.getElementById('testMode');
         const subjectInput = document.getElementById('subjectInput');
@@ -269,6 +286,22 @@
         let selectedDate = null;
         let editingSubject = null;
         let cameFromDayTasks = false;
+
+        function renderGlobalNotes() {
+            const storage = testMode.checked ? sessionStorage : localStorage;
+            const notes = JSON.parse(storage.getItem('globalNotes') || '[]');
+            globalNotesList.innerHTML = '';
+            notes.forEach(note => {
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'note-item';
+                noteDiv.innerHTML = `
+                    <p>${note.content.replace(/\n/g, '<br>')}</p>
+                    <button class="edit-note" data-id="${note.id}">Editar</button>
+                    <button class="delete-note" data-id="${note.id}">Excluir</button>
+                `;
+                globalNotesList.appendChild(noteDiv);
+            });
+        }
 
         function renderCalendar() {
             calendar.innerHTML = '';
@@ -596,8 +629,7 @@
         });
 
         globalNoteBtn.addEventListener('click', () => {
-            const storage = testMode.checked ? sessionStorage : localStorage;
-            globalNote.value = storage.getItem('globalNote') || '';
+            renderGlobalNotes();
             globalNoteModal.style.display = 'block';
             overlay.style.display = 'block';
         });
@@ -612,9 +644,56 @@
             renderCalendar();
         });
 
-        globalNote.addEventListener('input', () => {
+        globalNotesList.addEventListener('click', (e) => {
             const storage = testMode.checked ? sessionStorage : localStorage;
-            storage.setItem('globalNote', globalNote.value);
+            let notes = JSON.parse(storage.getItem('globalNotes') || '[]');
+            if (e.target.classList.contains('edit-note')) {
+                const id = e.target.dataset.id;
+                const note = notes.find(n => n.id == id);
+                const noteDiv = e.target.closest('.note-item');
+                noteDiv.innerHTML = `
+                    <textarea class="edit-textarea" style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">${note.content}</textarea>
+                    <button class="save-note" data-id="${id}">Salvar</button>
+                    <button class="cancel-edit">Cancelar</button>
+                `;
+            } else if (e.target.classList.contains('delete-note')) {
+                if (confirm('Tem certeza que deseja excluir esta anotação?')) {
+                    const id = e.target.dataset.id;
+                    notes = notes.filter(n => n.id != id);
+                    storage.setItem('globalNotes', JSON.stringify(notes));
+                    renderGlobalNotes();
+                }
+            } else if (e.target.classList.contains('save-note')) {
+                const id = e.target.dataset.id;
+                const textarea = e.target.previousElementSibling;
+                const content = textarea.value.trim();
+                if (content) {
+                    const note = notes.find(n => n.id == id);
+                    note.content = content;
+                } else {
+                    notes = notes.filter(n => n.id != id);
+                }
+                storage.setItem('globalNotes', JSON.stringify(notes));
+                renderGlobalNotes();
+            } else if (e.target.classList.contains('cancel-edit')) {
+                renderGlobalNotes();
+            }
+        });
+
+        addGlobalNoteBtn.addEventListener('click', () => {
+            const storage = testMode.checked ? sessionStorage : localStorage;
+            let notes = JSON.parse(storage.getItem('globalNotes') || '[]');
+            const newId = Date.now() + Math.random();
+            notes.push({id: newId, content: ''});
+            storage.setItem('globalNotes', JSON.stringify(notes));
+            renderGlobalNotes();
+            // Now edit the new one
+            const newNoteDiv = globalNotesList.lastElementChild;
+            newNoteDiv.innerHTML = `
+                <textarea class="edit-textarea" style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+                <button class="save-note" data-id="${newId}">Salvar</button>
+                <button class="cancel-edit">Cancelar</button>
+            `;
         });
 
         renderCalendar();
