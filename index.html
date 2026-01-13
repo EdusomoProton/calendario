@@ -95,6 +95,7 @@
         .subject-microeconomia { background: rgba(255, 255, 0, 0.8); color: black; }
         .subject-estatística { background: rgba(144, 238, 144, 0.8); }
         .subject-matemática { background: rgba(0, 0, 255, 0.8); }
+        .subject-revisao { background: rgba(255, 165, 0, 0.85); color: white; }
         .subject.completed {
             text-decoration: line-through;
             opacity: 0.6;
@@ -195,6 +196,25 @@
         .note-item button {
             margin-right: 5px;
         }
+        /* Date color classes */
+        .day.day-color-red {
+            background: linear-gradient(45deg, rgba(255,80,80,0.95), rgba(220,20,60,0.9));
+            color: white;
+        }
+        .day.day-color-yellow {
+            background: linear-gradient(45deg, rgba(255,235,59,0.95), rgba(255,214,10,0.9));
+            color: #222;
+        }
+        .day.day-color-green {
+            background: linear-gradient(45deg, rgba(144,238,144,0.95), rgba(60,179,113,0.9));
+            color: #fff;
+        }
+        .color-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; margin-right: 6px; cursor: pointer; }
+        .color-btn:focus { outline: none; }
+        .color-btn.selected { box-shadow: 0 0 0 3px rgba(0,0,0,0.15); }
+        .color-red { background: #ff4f4f; }
+        .color-yellow { background: #ffea3b; }
+        .color-green { background: #90ee90; }
     </style>
 </head>
 <body>
@@ -222,6 +242,7 @@
             <option value="microeconomia">Microeconomia</option>
             <option value="estatística">Estatística</option>
             <option value="matemática">Matemática</option>
+            <option value="revisao">Revisão</option>
         </select>
         <textarea id="notesInput" placeholder="Notas adicionais (opcional)"></textarea>
         <input type="checkbox" id="completedInput">
@@ -230,6 +251,13 @@
     </div>
     <div class="day-tasks" id="dayTasks">
         <h3>Tarefas de <span id="taskDate"></span></h3>
+        <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:13px; color:#666;">Cor do dia:</span>
+            <button id="colorRed" title="Vermelho" class="color-btn color-red" aria-label="Vermelho"></button>
+            <button id="colorYellow" title="Amarelo" class="color-btn color-yellow" aria-label="Amarelo"></button>
+            <button id="colorGreen" title="Verde" class="color-btn color-green" aria-label="Verde"></button>
+            <button id="colorClear" title="Remover cor" style="margin-left:6px; padding:4px 8px; font-size:12px;">Remover</button>
+        </div>
         <div id="taskList"></div>
         <button id="addNewTask">Adicionar nova tarefa</button>
         <button id="closeDayTasks">Fechar</button>
@@ -283,10 +311,43 @@
         const completedInput = document.getElementById('completedInput');
         const saveSubjectBtn = document.getElementById('saveSubject');
         const cancelSubjectBtn = document.getElementById('cancelSubject');
+        const colorRedBtn = document.getElementById('colorRed');
+        const colorYellowBtn = document.getElementById('colorYellow');
+        const colorGreenBtn = document.getElementById('colorGreen');
+        const colorClearBtn = document.getElementById('colorClear');
 
         let selectedDate = null;
         let editingSubject = null;
         let cameFromDayTasks = false;
+
+        function updateColorButtonsUI(color) {
+            if (!window.colorRedBtn) {
+                // fallback if variables not yet attached
+            }
+            [colorRedBtn, colorYellowBtn, colorGreenBtn].forEach(btn => btn && btn.classList.remove('selected'));
+            if (color === 'red' && colorRedBtn) colorRedBtn.classList.add('selected');
+            if (color === 'yellow' && colorYellowBtn) colorYellowBtn.classList.add('selected');
+            if (color === 'green' && colorGreenBtn) colorGreenBtn.classList.add('selected');
+        }
+
+        function setDateColor(color) {
+            if (!selectedDate) return;
+            const storage = testMode.checked ? sessionStorage : localStorage;
+            const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
+            if (color) {
+                storage.setItem(`${dateKey}-color`, color);
+            } else {
+                storage.removeItem(`${dateKey}-color`);
+            }
+            updateColorButtonsUI(color || '');
+            renderCalendar();
+        }
+
+        // Color button listeners
+        if (colorRedBtn) colorRedBtn.addEventListener('click', () => setDateColor('red'));
+        if (colorYellowBtn) colorYellowBtn.addEventListener('click', () => setDateColor('yellow'));
+        if (colorGreenBtn) colorGreenBtn.addEventListener('click', () => setDateColor('green'));
+        if (colorClearBtn) colorClearBtn.addEventListener('click', () => setDateColor(null));
 
         function renderGlobalNotes() {
             const storage = testMode.checked ? sessionStorage : localStorage;
@@ -390,6 +451,10 @@
                     taskList.innerHTML = '';
                     const storage = testMode.checked ? sessionStorage : localStorage;
                     const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+                    // atualizar controles de cor do dia
+                    const currentColor = storage.getItem(`${dateKey}-color`) || '';
+                    updateColorButtonsUI(currentColor);
+                
                     const subjects = JSON.parse(storage.getItem(dateKey) || '[]');
                     if (subjects.length === 0) {
                         taskList.innerHTML = '<p>Nenhuma tarefa para este dia.</p>';
@@ -415,6 +480,12 @@
                     dayTasksDiv.style.display = 'block';
                     overlay.style.display = 'block';
                 });
+
+                // Apply saved color class for the day element
+                const savedColor = storage.getItem(`${dateKey}-color`);
+                if (savedColor) {
+                    day.classList.add(`day-color-${savedColor}`);
+                }
 
                 calendar.appendChild(day);
             }
@@ -701,4 +772,3 @@
     </script>
 </body>
 </html>
-
